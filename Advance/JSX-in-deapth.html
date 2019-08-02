@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+    // React code will go here
+
+    class App extends React.Component {
+        
+        render() {
+            return (
+                <React.Fragment>
+                    <ErrorButton />
+                    <MyCustomButtons.ButtonWithColor color="blue"/>
+                    <MyComponent data={1+2+3+4+5}/>
+                    <NumberDescriber number={10}/>
+                    <NumberDescriber number={11}/>
+                    <MyMessager message="hello world" />
+                    <MyMessager message={'hello world'} />
+                    <MyMessager message="&lt;3" />
+                    <MyMessager message={'<3'} />
+                    <MyTextBox autocomplete />
+                    <MyTextBox autocomplete={true} />
+                    <MyTextBox autocomplete={false} />
+                    <App1/>
+                    <App2/>
+                    <App3/>
+                    <App5/>
+                    <TodoList/>
+                    <Hello/>
+                    <ListOfTenThings/>
+                    <Others messages={['hello','hi']}/>
+                </React.Fragment>
+            );
+        }
+    }
+
+    function ErrorButton() {
+        return <CustomButton color="red" />;
+    }
+
+    function CustomButton(props) {
+        return <button style={{color: props.color}}>button</button>
+    }
+
+    const MyCustomButtons = {
+        ButtonWithColor: function ButtonWithColor(props) {
+            return <button style={{color: props.color}}>button</button>
+        }
+    }
+
+    function MyComponent(props) {
+        return <p>{props.data}</p>
+    }
+
+    function NumberDescriber(props) {
+        let description;
+        if (props.number % 2 == 0) {
+            description = <strong>even</strong>;
+        } else {
+            description = <i>odd</i>;
+        }
+        return <div>{props.number} is an {description} number</div>;
+    }
+
+    function MyMessager(props) {
+        return <p>{props.message}</p>
+    }
+
+    function MyTextBox(props) {
+        if(props.autocomplete == true)
+            return <p>done</p>
+        else
+            return <p>not done</p>
+    }
+
+    function Greeting(props) {
+        return <p>{props.firstName} {props.lastName}</p>
+    }
+
+    function App1() {
+        return <Greeting firstName="Ben" lastName="Hector" />;
+    }
+
+    function App2() {
+        const props = {firstName: 'Ben', lastName: 'Hector'};
+        return <Greeting {...props} />;
+    }
+
+    const Button = props => {
+        const { kind, ...other } = props;
+        //console.log(kind);
+        //console.log(other);
+        //console.log(other.children);
+        const className = kind === "primary" ? "PrimaryButton" : "SecondaryButton";
+        return <button className={className} {...other} onClick={() => console.log(other.clicked_message)} />;
+    };
+
+    const App3 = () => {
+        return (
+            <div>
+                <Button kind="primary" clicked_message="Hello">
+                    Hello World!
+                </Button>
+                <Button kind="not-primary" clicked_message="Hi">
+                    Hi World!
+                </Button>
+            </div>
+        );
+    };
+
+    const App4 = (props) => {
+        console.log("list children in props of App4")
+        console.log(props)
+        return (
+            <div>
+                <App1/>
+            </div>
+        );
+    };
+
+    const App5 = (props) => {
+        return (
+            <div>
+                <App4>
+                    foo
+                    {'foo'}
+                    <App1/>
+                    <App2/>
+                    <App3/>
+                </App4>
+            </div>
+        );
+    };
+
+    function Item(props) {
+        return <li>{props.message}</li>;
+    }
+
+    function TodoList() {
+        const todos = ['finish doc', 'submit pr', 'nag dan to review'];
+        return (
+            <ul>
+                {todos.map((message) => <Item key={message} message={message} />)}
+            </ul>
+        );
+    }
+
+    function Hello(props) {
+        return <div>Hello {props.addressee}!</div>;
+    }
+
+    // Calls the children callback numTimes to produce a repeated component
+    function Repeat(props) {
+        let items = [];
+        for (let i = 0; i < props.numTimes; i++) {
+            items.push(props.children(i));
+        }
+        return <div>{items}</div>;
+    }
+
+    function ListOfTenThings() {
+        return (
+            <Repeat numTimes={10}>
+            {(index) => <div key={index}>This is item {index} in the list</div>}
+            </Repeat>
+        );
+    }
+
+    function Header() {
+        return (
+            <p>Header</p>
+        )
+    }
+
+    function Content() {
+        return (
+            <p>Content</p>
+        )
+    }
+
+    function MessageList(props) {
+        return (
+            <p>{props.messages.map((message) => message)}</p>
+        )
+    }
+
+    function Others(props) {
+        let showHeader = true;
+        let myVariable = 3;
+        return (
+            <React.Fragment>
+                <div />
+                <div></div>
+                <div>{false}</div>
+                <div>{null}</div>
+                <div>{undefined}</div>
+                <div>{true}</div>
+                <div>
+                    {showHeader && <Header />}
+                    <Content />
+                </div>
+                <div>
+                    {props.messages.length &&
+                        <MessageList messages={props.messages} />
+                    }
+                </div>
+                <div>
+                    {props.messages.length > 0 &&
+                        <MessageList messages={props.messages} />
+                    }
+                </div>
+                <div>
+                    My JavaScript variable is {String(myVariable)}.
+                </div>
+            </React.Fragment>
+        );
+    }
+
+    ReactDOM.render(
+        <App/>
+        , document.getElementById('root'));
+</script>
+
+</html>

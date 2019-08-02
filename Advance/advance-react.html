@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+    Keyword:
+    - Fragment
+    - ref
+-->
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+    <script type="text/babel">
+        function CustomTextInput(props) {
+            return (
+                <div>
+                    <input ref={props.inputRef} />
+                </div>
+            );
+        }
+
+        class Parent extends React.Component {
+            constructor(props) {
+                super(props);
+                this.inputElement1 = React.createRef();
+                this.inputElement2 = React.createRef();
+            }
+            render() {
+                return (
+                    <React.Fragment>
+                        <CustomTextInput inputRef={this.inputElement2}/>
+                        <CustomTextInput inputRef={this.inputElement1}/>
+                    </React.Fragment>
+                );
+            }
+
+            componentDidMount() {
+                this.inputElement1.current.focus();
+            }
+
+            componentWillUnmount() {
+                
+            }
+        }
+
+      ReactDOM.render(
+        <Parent/>
+        , document.getElementById('root'));
+    </script>
+</body>
+</html>

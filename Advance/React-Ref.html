@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+    // React code will go here
+  
+    class CustomTextInput extends React.Component {
+        constructor(props) {
+            super(props);
+            // create a ref to store the textInput DOM element
+            this.textInput1 = React.createRef(); // create ref
+
+            // Callback Refs
+            this.textInput2 = null;
+            this.setTextInputRef = element => {
+                this.textInput2 = element;
+            };
+
+            // Forwarding refs and higher-order components
+            this.inputRef5 = React.createRef();
+
+            this.focusTextInput1 = this.focusTextInput.bind(this, 1);
+            this.focusTextInput2 = this.focusTextInput.bind(this, 2);
+            this.focusTextInput3 = this.focusTextInput.bind(this, 3);
+            this.focusTextInput4 = this.focusTextInput.bind(this, 4);
+            this.focusTextInput5 = this.focusTextInput.bind(this, 5);
+        }
+    
+        focusTextInput(index) {
+            // Explicitly focus the text input using the raw DOM API
+            // Note: we're accessing "current" to get the DOM node
+            if(index == 1) // create ref normally case
+                this.textInput1.current.focus(); // focus an input using ref
+            if(index == 2) // Callback Refs case
+                this.textInput2.focus(); // focus an input using ref
+            if(index == 3) // String Ref case
+                this.refs.textInput3.focus(); // focus an input using ref
+            if(index == 4) // Forwarding Refs case
+                inputRef4.current.focus(); // focus an input using ref
+            if(index == 5) // Forwarding refs and higher-order components case
+                this.inputRef5.current.focus(); // focus an input using ref
+        }
+
+        handleSubmit = e => {
+            e.preventDefault();
+
+             // Getting Values from a ref
+            console.log(this.textInput1.current.value);
+            console.log(this.textInput2.value);
+            console.log(this.refs.textInput3.value);
+            console.log(inputRef4.current.value);
+            console.log(this.inputRef5.current.value);
+        };
+    
+        render() {
+
+            // tell React that we want to associate the <input> ref
+            // with the `textInput` that we created in the constructor
+            return (
+                <div>
+                    <input 
+                        type="button"
+                        value="Focus the text input 1"
+                        onClick={this.focusTextInput1}/>
+                    <input 
+                        type="button"
+                        value="Focus the text input 2"
+                        onClick={this.focusTextInput2}/>
+                    <input 
+                        type="button"
+                        value="Focus the text input 3"
+                        onClick={this.focusTextInput3}/>
+
+                    <input 
+                        type="button"
+                        value="Focus the text input 4"
+                        onClick={this.focusTextInput4}/>
+
+                    <input 
+                        type="button"
+                        value="Focus the text input 5"
+                        onClick={this.focusTextInput5}/>
+
+                    <form onSubmit={e => this.handleSubmit(e)}>
+                        <input type="text" ref={this.textInput1} placeholder="textInput1" onChange={() => console.log(this.textInput1.current.value)}/>
+                        <input type="text" ref={this.setTextInputRef} placeholder="textInput2" onChange={() => console.log(this.textInput2.value)}/>
+                        {/* String Ref (Legacy API this should not be done in new code as the API will be deprecated.*/}
+                        <input type="text" ref="textInput3" placeholder="textInput3" onChange={() => console.log(this.refs.textInput3.value)}/>
+                        <TextInput4 ref={inputRef4} />
+                        <TextInput5 ref={this.inputRef5} />
+                        <button>Submit</button>
+                    </form>
+                </div>
+            );
+        }
+    }
+
+    // Forwarding Refs
+    /* You can forward a ref to a component by using the React.forwardRef function */
+    const TextInput4 = React.forwardRef((props, ref) => (
+        <input type="text" ref={ref} placeholder="textInput4" onChange={() => console.log(ref.current.value)}/>
+    ));
+    const inputRef4 = React.createRef();
+
+    // Forwarding refs and higher-order components
+    const Input = InputComponent => {
+        const forwardRef = (props, ref) => {
+            const onType = () => console.log(ref.current.value);
+            return <InputComponent forwardedRef={ref} onChange={onType} {...props} />;
+        };
+        return React.forwardRef(forwardRef);
+    };
+    const TextInput = ({ forwardedRef, children, ...rest }) => (
+        <React.Fragment>
+            <input ref={forwardedRef} {...rest} type="text" placeholder="textInput5"/>
+            {children}
+        </React.Fragment>
+    );
+    const TextInput5 = Input(TextInput);
+  
+    ReactDOM.render(<CustomTextInput/>, document.getElementById('root'));
+</script>
+
+</html>

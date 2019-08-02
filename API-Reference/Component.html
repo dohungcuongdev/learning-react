@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+var fakeIsMounted = false;
+var index = 0;
+function lifecycle() {
+    return fakeIsMounted?"Updating":"Mounting";
+}
+
+class App extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { willRenderTestReactComponent: true };
+    }
+
+    testUnmount() {
+        this.setState({
+            willRenderTestReactComponent: !this.state.willRenderTestReactComponent
+        });
+    }
+
+    render() {
+        return (
+            <div>
+                <button onClick={(e) => this.testUnmount(e)}>testUnmount</button>
+                {this.state.willRenderTestReactComponent && <TestReactComponent greeting={'Hello'}/>}
+                <button id="change-message-2">Change Message 2</button>
+            </div>
+        );
+    }
+}
+
+class TestReactComponent extends React.Component {
+
+    /* Mounting: methods are called in the following order when an instance of a component is being created and inserted into the DOM: */
+    /* Updating: An update can be caused by changes to props or state. These methods are called in the following order when a component is being re-rendered: */
+    /* Unmounting: method is called when a component is being removed from the DOM:*/
+    /* Error Handling:  methods are called when there is an error during rendering, in a lifecycle method, or in the constructor of any child component.*/
+
+    // Mounting
+    constructor(props) {
+        console.log(lifecycle()+" - "+(++index)+". constructor was calling");
+        super(props);
+        this.state = { msg: 'World', allowUpdate: true, cachedSomeProp: null, hasError: false, name: 'cuong' };
+        this.handleChangeMessage = this.handleChangeMessage.bind(this);
+        this.handleChangeAllowUpdate = this.handleChangeAllowUpdate.bind(this);
+    }
+
+    // Mounting + Updating
+    static getDerivedStateFromProps(props, state) {
+        console.log(lifecycle()+" - "+(++index)+". getDerivedStateFromProps was calling");
+        //console.log(this.state.name); // this will got bug
+        console.log(state.name); // this will log changed value
+        
+        // getDerivedStateFromProps is invoked right before calling the render method, both on the initial mount and on subsequent updates. It should return an object to update the state, or null to update nothing.
+        // This method exists for rare use cases where the state depends on changes in props over time. For example, it might be handy for implementing a <Transition> component that compares its previous and next children to decide which of them to animate in and out.
+        let cachedSomeProp = state.cachedSomeProp;
+        if(cachedSomeProp == null) {
+            cachedSomeProp = props.greeting
+        }
+        return {
+            cachedSomeProp: cachedSomeProp,
+        };
+    }
+
+    // Mounting + Updating
+    render() {
+        console.log(lifecycle()+" - "+(++index)+". render was calling");
+        console.log(this.state.name); // this will log changed value
+        return (
+            <div>
+                <p>{this.props.greeting} {this.state.msg}</p>
+                <button onClick={this.handleChangeMessage}>Change Message</button>
+                <button onClick={this.handleChangeAllowUpdate}>Change Allow Update</button>
+                <BuggyCounter/>
+                <p>{this.state.hasError?"Has Error":"No Error"}</p>
+                <button onClick={(e) => this.handleTestSetState(e)}>Test SetState</button>
+                <p>{this.state.name}</p>
+                <button onClick={(e) => this.handleTestForceUpdate(e)}>Test forceUpdate</button>
+                <p>{this.props.color}</p>
+            </div>
+        );
+    }
+
+    // Mounting
+    componentDidMount() {
+        console.log(lifecycle()+" - "+(++index)+". componentDidMount was calling - this.state.cachedSomeProp=",this.state.cachedSomeProp);
+        let change_message_2_button = document.getElementById("change-message-2");
+        change_message_2_button.addEventListener("click", this.handleChangeMessage);
+        fakeIsMounted = true;
+    }
+
+    // Updating
+    shouldComponentUpdate(nextProps, nextState) {
+        console.log(lifecycle()+" - "+(++index)+". shouldComponentUpdate was calling");
+        console.log(this.state.name); // this will log old value
+        console.log(nextState.name); // this will log changed value
+        return this.state.allowUpdate;
+    }
+
+    // Updating
+    getSnapshotBeforeUpdate(prevProps, prevState) {
+        // getSnapshotBeforeUpdate() is invoked right before the most recently rendered output is committed to e.g. the DOM. It enables your component to capture some information from the DOM (e.g. scroll position) before it is potentially changed. Any value returned by this lifecycle will be passed as a parameter to componentDidUpdate().
+        // This use case is not common, but it may occur in UIs like a chat thread that need to handle scroll position in a special way.
+        // A snapshot value (or null) should be returned.
+        console.log(lifecycle()+" - "+(++index)+". getSnapshotBeforeUpdate was calling");
+        console.log(this.state.name); // this will log changed value
+        let cachedSomeProp = prevState.cachedSomeProp;
+        if(cachedSomeProp == null) {
+            cachedSomeProp = prevProps.greeting
+        }
+        return {
+            cachedSomeProp: cachedSomeProp,
+        };
+    }
+
+    // Updating
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        console.log(lifecycle()+" - "+(++index)+". componentDidUpdate was calling - snapshot=",snapshot);
+        console.log(this.state.name); // this will log changed value
+    }
+
+    // Unmounting
+    componentWillUnmount() {
+        console.log("Unmounting - "+(++index)+". componentWillUnmount was calling");
+        let change_message_2_button = document.getElementById("change-message-2");
+        change_message_2_button.removeEventListener("click", this.handleChangeMessage);
+        fakeIsMounted = false;
+    }
+
+    // Error Handling
+    static getDerivedStateFromError(error) {
+        console.log("Error Handling - "+(++index)+". getDerivedStateFromError was calling");
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true };
+    }
+
+    // Error Handling
+    componentDidCatch(error, info) {
+        console.log("Error Handling - "+(++index)+". componentDidCatch was calling");
+        console.log(error);
+    }
+
+    handleChangeMessage() {
+        console.log("Method - "+(++index)+". handleChangeMessage was calling");
+        if(this.state.msg == 'World') {
+            this.setState({
+                msg: 'Cuong'
+            });
+        } else {
+            this.setState({
+                msg: 'World'
+            });
+        }
+    }
+
+    handleChangeAllowUpdate() {
+        console.log("Method - "+(++index)+". handleChangeAllowUpdate was calling");
+        this.setState({
+            allowUpdate: !this.state.allowUpdate
+        });
+    }
+
+    handleTestSetState() {
+        console.log("Method - "+(++index)+". handleTestSetState was calling");
+        // setState(updater[, callback])
+        // setState() enqueues changes to the component state and tells React that this component and its children need to be re-rendered with the updated state. React does not guarantee that the state changes are applied immediately. setState() does not always immediately update the component. It may batch or defer the update until later. This makes reading this.state right after calling setState() a potential pitfall. Instead, use componentDidUpdate or a setState callback (setState(updater, callback))
+        if(this.state.name === "cuong") {
+            this.setState(
+                { name: "hung cuong" },
+                () => {
+                    console.log(this.state.name); // this will log changed value of state
+                }
+            );
+        }
+        if(this.state.name  === "hung cuong") {
+            this.setState(
+                { name: "cuong" },
+                () => console.log(this.state.name) // this will log changed value of state
+            );
+        }
+
+        console.log(this.state.name); // this will log old value
+    }
+
+    handleTestForceUpdate() {
+        console.log("Method - "+(++index)+". handleTestForceUpdate was calling");
+        // By default, when your component’s state or props change, your component will re-render. If your render() method depends on some other data, you can tell React that the component needs re-rendering by calling forceUpdate().
+        // Calling forceUpdate() will cause render() to be called on the component, skipping shouldComponentUpdate(). This will trigger the normal lifecycle methods for child components, including the shouldComponentUpdate() method of each child. React will still only update the DOM if the markup changes.
+        // Normally you should try to avoid all uses of forceUpdate() and only read from this.props and this.state in render().
+        this.forceUpdate(() => console.log("forceUpdate done"));
+        console.log("forceUpdate not done at the line")
+    }
+}
+
+// defaultProps can be defined as a property on the component class itself, to set the default props for the class. This is used for undefined props, but not for null props
+TestReactComponent.defaultProps = {
+    color: 'red'
+}
+
+class BuggyCounter extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleThrowError = this.handleThrowError.bind(this);
+        this.state = {
+            fakeErrorCondition: false
+        }
+    }
+    
+    handleThrowError() {
+        console.log("Method - "+(++index)+". handleThrowError was calling");
+        this.setState({
+            fakeErrorCondition: true
+        });
+    }
+
+    render() {
+        if(this.state.fakeErrorCondition) {
+            throw new Error("Because I like");
+        } else {
+            return (
+                <div>
+                    <button onClick={this.handleThrowError}>Throw Error</button>
+                </div>
+            );
+        }
+    }
+}
+
+
+/*
+Convention: Wrap the Display Name for Easy Debugging
+The container components created by HOCs show up in the React Developer Tools like any other component. To ease debugging, choose a display name that communicates that it’s the result of a HOC.
+The most common technique is to wrap the display name of the wrapped component. So if your higher-order component is named withSubscription, and the wrapped component’s display name is CommentList, use the display name WithSubscription(CommentList):
+*/
+function withSubscription(WrappedComponent) {
+  class WithSubscription extends React.Component {/* ... */}
+  WithSubscription.displayName = `WithSubscription(${getDisplayName(WrappedComponent)})`;
+  return WithSubscription;
+}
+
+function withSubscription2(WrappedComponent) {
+  class WithSubscription extends React.Component {/* ... */}
+  WithSubscription.displayName = `${getDisplayName(WrappedComponent)}WithSubscription`;
+  return WithSubscription;
+}
+
+function getDisplayName(WrappedComponent) {
+  return WrappedComponent.displayName || WrappedComponent.name || 'Component';
+}
+
+class CommentList extends React.Component {/* ... */}
+
+console.log(getDisplayName(CommentList));
+console.log(getDisplayName(withSubscription(CommentList)));
+console.log(getDisplayName(withSubscription2(CommentList)));
+
+ReactDOM.render(
+  <App/>,
+  document.getElementById('root')
+);
+  
+</script>
+
+</html>

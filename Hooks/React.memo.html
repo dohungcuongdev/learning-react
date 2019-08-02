@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+const useState = React.useState;
+const useEffect = React.useEffect;
+const useCallback = React.useCallback;
+
+function UserInfoNormal(props) {
+  const { name, avatar } = props;
+  console.log("NORMAL COMPONENT RENDERING");
+  useEffect(() => {
+    console.log("NORMAL COMPONENT EFFECT");
+  });
+  return (
+    <div className="user-info">
+      <img src={avatar} alt={`${name}'s avatar`} />
+      <span>{name}</span>
+    </div>
+  );
+}
+
+const UserInfoMemo = React.memo(props => {
+  /* only rerenders if props change */
+  const { name, avatar } = props;
+  console.log("MEMO COMPONENT RENDERING");
+  useEffect(() => {
+    console.log("MEMO COMPONENT EFFECT");
+  });
+
+  return (
+    <div className="user-info">
+      <img src={avatar} alt={`${name}'s avatar`} />
+      <span>{name}</span>
+    </div>
+  );
+});
+
+function App() {
+    const [search, setSearch] = useState("");
+    console.log("App COMPONENT RENDERING");
+    useEffect(() => {
+        console.log("APP COMPONENT EFFECT");
+    });
+    return (
+        <div className="App">
+        <div>
+            <input
+            type="text"
+            onChange={e => setSearch(e.target.value)}
+            value={search}
+            placeholder="Search"
+            />
+        </div>
+        <UserInfoNormal
+            name="Normal User"
+            avatar="https://via.placeholder.com/75x75"
+        />
+        <UserInfoMemo
+            name="Memo User"
+            avatar="https://via.placeholder.com/75x75"
+        />
+        </div>
+    );
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+
+</html>
+<style>
+.App {
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.user-info img {
+  margin-right: 15px;
+  border-radius: 100%;
+}
+
+</style>

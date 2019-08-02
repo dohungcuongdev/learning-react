@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+<script>
+// don't care about this, it is just the script to avoid error from HTMLElement
+(function() {
+  if (
+    // No Reflect, no classes, no need for shim because native custom elements
+    // require ES2015 classes or Reflect.
+    window.Reflect === undefined ||
+    window.customElements === undefined ||
+    // The webcomponentsjs custom elements polyfill doesn't require
+    // ES2015-compatible construction (`super()` or `Reflect.construct`).
+    window.customElements.polyfillWrapFlushCallback
+  ) {
+    return;
+  }
+  const BuiltInHTMLElement = HTMLElement;
+  /**
+   * With jscompiler's RECOMMENDED_FLAGS the function name will be optimized away.
+   * However, if we declare the function as a property on an object literal, and
+   * use quotes for the property name, then closure will leave that much intact,
+   * which is enough for the JS VM to correctly set Function.prototype.name.
+   */
+  const wrapperForTheName = {
+    'HTMLElement': /** @this {!Object} */ function HTMLElement() {
+      return Reflect.construct(
+          BuiltInHTMLElement, [], /** @type {!Function} */ (this.constructor));
+    }
+  };
+  window.HTMLElement = wrapperForTheName['HTMLElement'];
+  HTMLElement.prototype = BuiltInHTMLElement.prototype;
+  HTMLElement.prototype.constructor = HTMLElement;
+  Object.setPrototypeOf(HTMLElement, BuiltInHTMLElement);
+})();
+</script>
+
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+class App extends React.Component {
+  render() {
+    return <SearchGoogle keyword={'do hung cuong'}/>
+  }
+}
+
+class SearchGoogle extends React.Component {
+  render() {
+    return <div>Keyword: <x-search>{this.props.keyword}</x-search>!</div>;
+  }
+}
+
+class XSearch extends HTMLElement {
+  connectedCallback() {
+    const mountPoint = document.createElement('span');
+    this.attachShadow({ mode: 'open' }).appendChild(mountPoint);
+    //const keyword = this.getAttribute('keyword');
+    const keyword = this.textContent;
+    const url = 'https://www.google.com/search?q=' + encodeURIComponent(keyword);
+    ReactDOM.render(<a href={url}>{keyword}</a>, mountPoint);
+  }
+}
+customElements.define('x-search', XSearch);
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+  
+</script>
+
+</html>

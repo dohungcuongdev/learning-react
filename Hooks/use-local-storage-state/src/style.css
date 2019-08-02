@@ -1,0 +1,22 @@
+body {
+  background-color: #1B2634;
+  font-family: Lato;
+  color: rgb(151, 243, 255, 0.9);
+}
+h1, p {
+  font-family: Lato;
+}
+
+button {
+  cursor: pointer;
+  margin-right: 0.25em;
+  padding: 0.5em;
+  border: none;
+  border-radius: 4px;
+  background-color: rgba(151, 243, 255, 0.9);
+  color: rgb(8, 44, 54);
+}
+button:hover {
+  background-color: rgba(151, 243, 255, 0.7);
+  color: rgba(8, 44, 54, 0.616);
+}

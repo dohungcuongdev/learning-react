@@ -1,0 +1,74 @@
+<script type="text/babel">
+
+// Component and simple (function) component
+
+// memo, PureComponent, shouldComponentUpdate()
+const MyComponent = React.memo(function MyComponent(props) {
+  // It’s similar to React.PureComponent but for function components instead of classes.
+});
+
+class MyComponent extends PureComponent.Component {
+  // component on't update if prop and state not changed
+}
+
+class MyComponent extends React.Component {
+  shouldComponentUpdate(nextProps, nextState)() {
+    // handle in this function return true or false, if false then component won't be updated
+  }
+}
+
+// createElement()
+// Code written with JSX will be converted to use React.createElement(). You will not typically invoke React.createElement() directly if you are using JSX.
+React.createElement(
+  type,
+  [props],
+  [...children]
+)
+
+// cloneElement()
+// props.children isn't the actual children; It is the descriptor of the children. So you don't have actually anything to change; you can't change any props, or edit any functionality; you can only read from it. If you need to make any modifications you have to create new elements using React.CloneElement.
+React.cloneElement(
+  element,
+  [props],
+  [...children]
+)
+
+// React.cloneElement() is almost equivalent to:
+<element.type {...element.props} {...props}>{children}</element.type>
+
+// createFactory()
+React.createFactory(type) // This helper is considered legacy, and we encourage you to either use JSX or use React.createElement() directly instead. You will not typically invoke React.createFactory() directly if you are using JSX
+
+// isValidElement()
+React.isValidElement(object) // Verifies the object is a React element. Returns true or false.
+
+// React.Children map, forEach, count, only, toArray
+React.Children.map(children, function[(thisArg)]) {} //Invokes a function on every immediate child contained within children with this set to thisArg. If children is an array it will be traversed and the function will be called for each child in the array. If children is null or undefined, this method will return null or undefined rather than an array.
+React.Children.forEach(children, function[(thisArg)]) {} // Like React.Children.map() but does not return an array.
+React.Children.count(children) {} // Returns the total number of components in children, equal to the number of times that a callback passed to map or forEach would be invoked.
+React.Children.only(children) {} // Verifies that children has only one child (a React element) and returns it. Otherwise this method throws an error.
+React.Children.toArray(children) {} // Returns the children opaque data structure as a flat array with keys assigned to each child. Useful if you want to manipulate collections of children in your render methods, especially if you want to reorder or slice this.props.children before passing it down.
+
+// React.Fragment
+)
+// React.createRef
+)
+// React.forwardRef
+
+// React.lazy
+const SomeComponent = React.lazy(() => import('./SomeComponent')); // This component is loaded dynamically
+
+//React.Suspense
+const OtherComponent = React.lazy(() => import('./OtherComponent'));
+function MyComponent() {
+  return (
+    // Displays <Spinner> until OtherComponent loads
+    <React.Suspense fallback={<Spinner />}>
+      <div>
+        <OtherComponent />
+      </div>
+    </React.Suspense>
+  );
+}
+
+</script>

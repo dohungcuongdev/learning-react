@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+function App() {
+  return (
+    <div className="App">
+      <h1>Tabs Container example</h1>
+      <TabsContainer defaultTab="home">
+        <Tab name="home" title="Home">
+          Home Content
+        </Tab>
+        <Tab name="blog" title="Blog">
+          Blog Content
+        </Tab>
+        <Tab name="contact" title="Contact Us">
+          Contact content
+        </Tab>
+      </TabsContainer>
+    </div>
+  );
+}
+
+const TabMenuItem = ({ title, onClick }) => (
+  <li className="tab-item" onClick={onClick}>
+    {title}
+  </li>
+);
+
+class TabsContainer extends React.Component {
+  constructor(props) {
+    super();
+    this.state = {
+      currentTabName: props.defaultTab
+    };
+  }
+
+  setActiveChild = currentTabName => {
+    this.setState({ currentTabName });
+  };
+
+  renderTabMenu = children => {
+    return (
+      <ul>
+        {React.Children.map(children, child => (
+          <TabMenuItem
+            title={child.props.title}
+            onClick={() => this.setActiveChild(child.props.name)}
+          />
+        ))}
+      </ul>
+    );
+  };
+
+  render() {
+    const { children } = this.props;
+    const { currentTabName } = this.state;
+    const currentTab = React.Children.toArray(children).filter(
+      child => child.props.name === currentTabName
+    );
+
+    console.log("What React.Children look like: ", children);
+
+    return (
+      <div>
+        {this.renderTabMenu(children)}
+        <div>{currentTab}</div>
+      </div>
+    );
+  }
+}
+
+const Tab = ({ title, children }) => (
+  <div>
+    <h1>{title}</h1>
+    {children}
+  </div>
+);
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+  
+</script>
+
+<style>
+  .App {
+    font-family: sans-serif;
+    text-align: center;
+  }
+
+  ul {
+    list-style-type: none;
+  }
+
+  .tab-item {
+    color: blue;
+    display: inline-block;
+    padding: 1rem;
+    cursor: pointer;
+  }
+</style>
+
+</html>

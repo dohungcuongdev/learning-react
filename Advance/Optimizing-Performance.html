@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+    // React code will go here
+
+    class App extends React.Component {
+        render() {
+            return (
+                <React.Fragment>
+                    <CounterButton/>
+                    <hr/>
+                    <CounterButton2/>
+                    <hr/>
+                    <CounterButton3/>
+                    <hr/>
+                    <MyComponent/>
+                </React.Fragment>
+            );
+        }
+    }
+
+    class CounterButton extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {count: 1};
+        }
+
+        componentDidUpdate() {
+            console.log("updated");
+        }
+
+        // In this code, shouldComponentUpdate is just checking if there is any change in props.color or state.count. If those values don’t change, the component doesn’t update.
+        shouldComponentUpdate(nextProps, nextState) {
+            let willUpdate = false;
+            if (this.props.color !== nextProps.color) {
+                willUpdate = true;
+            }
+            if (this.state.count !== nextState.count) {
+                willUpdate = true;
+            }
+            console.log("shouldComponentUpdate: " + willUpdate)
+            return willUpdate;
+        }
+
+        render() {
+            return (
+                <React.Fragment>
+                    Will Update
+                    <button
+                        color={this.props.color}
+                        onClick={() => this.setState(state => ({count: state.count + 1}))}>
+                        Count: {this.state.count}
+                    </button>
+                    <br/>
+                    Won't Update
+                    <button
+                        color={this.props.color}
+                        onClick={() => this.setState(state => ({count: state.count}))}>
+                        Count: {this.state.count}
+                    </button>
+                </React.Fragment>
+            );
+        }
+    }
+
+    // If your component got more complex, you could use a similar pattern of doing a “shallow comparison” between all the fields of props and state to determine if the component should update. This pattern is common enough that React provides a helper to use this logic - just inherit from React.PureComponent. So this code is a simpler way to achieve the same thing:
+    class CounterButton2 extends React.PureComponent {
+        constructor(props) {
+            super(props);
+            this.state = {count: 1};
+        }
+
+        componentDidUpdate() {
+            console.log("updated");
+        }
+
+        render() {
+            return (
+                <React.Fragment>
+                    Will Update
+                    <button
+                        color={this.props.color}
+                        onClick={() => this.setState(state => ({count: state.count + 1}))}>
+                        Count: {this.state.count}
+                    </button>
+                    <br/>
+                    Won't Update
+                    <button
+                        color={this.props.color}
+                        onClick={() => this.setState(state => ({count: state.count}))}>
+                        Count: {this.state.count}
+                    </button>
+                </React.Fragment>
+            );
+        }
+    }
+
+    // It’s similar to React.PureComponent but for function components instead of classes.
+    const CounterButton3 = React.memo(function CounterButton3(props) {
+        const [state, setState] = React.useState({
+            count: 0
+        });
+
+        React.useEffect(() => {
+            console.log("updated");
+        }, [props.color, state.count]);
+
+        return (
+            <React.Fragment>
+                Will Update
+                <button
+                    color={props.color}
+                    onClick={() => setState(state => ({count: state.count + 1}))}>
+                    Count: {state.count}
+                </button>
+                <br/>
+                Won't Update
+                <button
+                    color={props.color}
+                    onClick={() => setState(state => ({count: state.count}))}>
+                    Count: {state.count}
+                </button>
+            </React.Fragment>
+        );
+    });
+
+    // The Power Of Not Mutating Data
+    class MyComponent extends React.Component {
+
+        constructor(props) {
+            super(props);
+            this.state = { 
+                words: ['cuong'],
+                colormap: {left: 'red', right: 'green'}
+            };
+
+            this.handleClick1 = this.handleClick1.bind(this);
+            this.handleClick2 = this.handleClick2.bind(this);
+            this.handleClick3 = this.handleClick3.bind(this);
+            this.handleUpdateColorMap1 = this.handleUpdateColorMap1.bind(this);
+            this.handleUpdateColorMap2 = this.handleUpdateColorMap2.bind(this);
+            this.handleUpdateColorMap3 = this.handleUpdateColorMap3.bind(this);
+        }
+
+        handleClick1() { // Mutating
+            const words = this.state.words;
+            words.push('marklar');
+            this.setState({words: words});
+        }
+
+        handleClick2() { // Avoid Mutating
+            this.setState(state => ({
+                words: state.words.concat(['marklar'])
+            }));
+        }
+
+        handleClick3() { // Avoid Mutating
+            this.setState(state => ({
+                words: [...state.words, 'marklar'],
+            }));
+        };
+
+        handleUpdateColorMap1() {
+            this.updateColorMap1(this.state.colormap);
+            this.setState(state => ({
+                colormap: this.state.colormap
+            }));
+        }
+
+        handleUpdateColorMap2() {
+            this.setState(state => ({
+                colormap: this.updateColorMap2(this.state.colormap)
+            }));
+        }
+
+        handleUpdateColorMap3() {
+            this.setState(state => ({
+                colormap: this.updateColorMap3(this.state.colormap)
+            }));
+        }
+
+        updateColorMap1(colormap) { // mutates objects to avoid mutation
+            colormap.right = 'blue';
+        }
+
+        updateColorMap2(colormap) { // Avoid Mutating
+            return Object.assign({}, colormap, {right: 'red'});
+        }
+
+        updateColorMap3(colormap) { // Avoid Mutating
+            return {...colormap, right: 'green'};
+        }
+
+        render() {
+            return (
+                <React.Fragment>
+                    {this.state.words} 
+                    <br/>
+                    {this.state.colormap.left} 
+                    <br/>
+                    {this.state.colormap.right}
+                    <br/>
+                    <button onClick={this.handleClick1}>handleClick1</button>
+                    <button onClick={this.handleClick2}>handleClick2</button>
+                    <button onClick={this.handleClick3}>handleClick3</button>
+                    <button onClick={this.handleUpdateColorMap1}>handleUpdateColorMap1</button>
+                    <button onClick={this.handleUpdateColorMap2}>handleUpdateColorMap2</button>
+                    <button onClick={this.handleUpdateColorMap3}>handleUpdateColorMap3</button>
+                </React.Fragment>
+            );
+        }
+
+    }
+
+    ReactDOM.render(
+        <App/>
+        , document.getElementById('root'));
+</script>
+
+</html>

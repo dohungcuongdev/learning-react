@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+const useState = React.useState;
+const useEffect = React.useEffect;
+
+/*
+componentDidMount() {
+  window.addEventListener('mousemove', () => {})
+}
+
+componentWillUnmount() {
+  window.removeEventListener('mousemove', () => {})
+}
+Hook equivalent of above code will be as follows
+
+useEffect(() => {
+  window.addEventListener('mousemove', () => {});
+
+  // returned function will be called on component unmount 
+  return () => {
+    window.removeEventListener('mousemove', () => {})
+  }
+}, [])
+*/
+
+function WrapperApp() {
+  const [mountApp, setMountApp] = useState(false);
+  if(mountApp) {
+    return (
+      <div>
+        <App/>
+        <button onClick={() => setMountApp(false)}>Unmount App</button>
+      </div>
+    )
+  } else {
+    return (
+      <div>
+        <button onClick={() => setMountApp(true)}>Mount App</button>
+      </div>
+    )
+  }
+}
+
+var count = 0;
+
+const App = () => {
+    const [state, changeState] = useState({greeting: 'Hi', message: 'Cuong'});
+    const changeGreeting = () => {
+        let newGreeting = (state.greeting==='Hi')?"Hello":"Hi";
+        changeState({greeting: newGreeting, message: state.message})
+    }
+    const changeMessage = () => {
+        let newMessage = (state.message==='Cuong')?"Hung Cuong":"Cuong";
+        changeState({greeting: state.greeting, message: newMessage})
+    }
+    useEffect(() => {
+        console.log("componentDidMount");
+
+        // returned function will be called on component unmount 
+        return () => {
+          count = 0;
+          console.log("componentWillUnmount");
+        }
+    }, [])
+    useEffect(() => {
+        count++;
+        if(count <= 1) {
+          console.log('1st time: componentDidMount - '+count);
+        } else {
+          console.log('from the 2nd time: componentDidUpdate - '+count);
+        }
+    }) // no array as 2nd argument
+    useEffect(() => {
+        console.log("Trigger only when message is changed"); // only message change then trigger
+    }, [state.message])
+    return (
+        <div>
+            {console.log("returned")}
+            <p>{state.greeting}, {state.message}</p>
+            <button onClick={changeGreeting}>Change greeting</button>
+            <button onClick={changeMessage}>Change messgae</button>
+        </div>
+    );
+};
+
+ReactDOM.render(<WrapperApp />, document.getElementById('root'));
+</script>

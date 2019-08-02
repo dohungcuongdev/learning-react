@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+function App() {
+    const tabs = [
+        {
+            name:"home",
+            title:"Home",
+            content: "Home Content"
+        },
+        {
+            name:"blog",
+            title:"Blog",
+            content: "Blog Content"
+        },
+        {
+            name:"contact",
+            title:"Contact Us",
+            content: "Contact Content"
+        }
+    ];
+    const defaultTab = tabs[0];
+    return (
+        <div className="App">
+            <h1>Tabs Container example</h1>
+            <TabsContainer tabs={tabs} defaultTab={defaultTab}/>
+        </div>
+    );
+}
+
+class TabsContainer extends React.Component {
+  constructor(props) {
+    super();
+    this.state = {
+        currentTab: props.defaultTab
+    };
+  }
+
+  setActiveTab = tab => {
+    this.setState({ currentTab: tab });
+  };
+
+  render() {
+    const currentTab = this.state.currentTab;
+    const tabs = this.props.tabs;
+    const tabMenuItem = tabs.map((tab) =>
+        <TabMenuItem 
+            key={tab.name}
+            title={tab.title} 
+            onClick={() => this.setActiveTab(tab)}/>
+    );
+
+    return (
+      <div>
+        {tabMenuItem}
+        <Tab title={currentTab.title} content={currentTab.content}/>
+      </div>
+    );
+  }
+}
+
+const TabMenuItem = ({ title, onClick }) => (
+  <li className="tab-item" onClick={onClick}>
+    {title}
+  </li>
+);
+
+const Tab = ({ title, content }) => (
+  <div>
+    <h1>{title}</h1>
+    {content}
+  </div>
+);
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+  
+</script>
+
+<style>
+    .App {
+        font-family: sans-serif;
+        text-align: center;
+    }
+
+    ul {
+        list-style-type: none;
+    }
+
+    .tab-item {
+        color: blue;
+        display: inline-block;
+        padding: 1rem;
+        cursor: pointer;
+    }
+</style>
+
+</html>

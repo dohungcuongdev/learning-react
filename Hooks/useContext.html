@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+const useContext = React.useContext;
+
+const WrapperAppContext = React.createContext({});
+
+function WrapperApp() {
+  const user = { name: 'Tania', loggedIn: true };
+
+  return (
+    <div>
+        <h1>WrapperApp</h1>
+        <WrapperAppContext.Provider value={user}>
+        <App name="App"/>
+        </WrapperAppContext.Provider>
+    </div>
+  )
+}
+
+const App = (props) => { // if using props we need to pass user in order WrapperApp -> App -> AppChild
+    return (
+        <div>
+            <h2>{props.name}</h2>
+            <AppChild1 name="AppChild1"/>
+            <AppChild2 name="AppChild2"/>
+        </div>
+    );
+};
+
+
+const AppChild1 = (props) => {
+    const user = useContext(WrapperAppContext); // with context we can pass user directly from WrapperApp -> AppChild
+    return (
+        <div>
+            <h3>{props.name}</h3>
+            <p>{user.name}</p>
+            <p>{user.loggedIn.toString()}</p>
+        </div>
+    );
+};
+
+
+const AppChild2 = (props) => {
+    return (
+        <div>
+            <h3>{props.name}</h3>
+            <WrapperAppContext.Consumer>
+                {props => {
+                    return <React.Fragment>
+                        <p>{props.name}</p>
+                        <p>{props.loggedIn.toString()}</p>
+                    </React.Fragment>
+                }}
+            </WrapperAppContext.Consumer>
+        </div>
+    );
+};
+
+
+ReactDOM.render(<WrapperApp />, document.getElementById('root'));
+</script>

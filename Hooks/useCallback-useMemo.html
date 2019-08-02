@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+const useState = React.useState;
+const useEffect = React.useEffect;
+
+// Pass an inline callback and an array of dependencies. useCallback will return a memoized version of the callback that only changes if one of the dependencies has changed. This is useful when passing callbacks to optimized child components that rely on reference equality to prevent unnecessary renders (e.g. shouldComponentUpdate).
+// useCallback(fn, deps) is equivalent to useMemo(() => fn, deps).
+// The following are functionally equivalent
+// const callbackF = useCallback(f, [])
+// const callbackF = useMemo(() => f, [])
+const useCallback = React.useCallback;
+const useMemo = React.useMemo;
+
+function sumTwoNumber(a,b) {
+  return a+b;
+}
+
+function callBackSumTwoNumber(a,b) {
+  console.log("call back - "+sumTwoNumber(a, b));
+}
+
+const initA = 10, initB = 11;
+
+const App = () => {
+  const [a, changeA] = useState(initA);
+  const [b, changeB] = useState(initB);
+  const memoizedCallback = useCallback(
+    callBackSumTwoNumber(a,b),
+    [],
+  );
+  const noCallback = () => {
+    console.log("noCallback - "+sumTwoNumber(a, b));
+  }
+  const memoizedValue = useMemo(() => console.log("memo - "+sumTwoNumber(a, b)), [b]); // only if b changed then trigger
+  return (
+    <div>
+      <p>{a} {b}</p>
+      <button onClick={() => changeA(a+1)}>Change A</button>
+      <button onClick={() => changeB(b+1)}>Change B</button>
+      <button onClick={memoizedCallback}>test</button>
+      <button onClick={noCallback}>test2</button>
+      <hr/>
+      <App2/>
+      <hr/>
+      <App3/>
+      <hr/>
+      <App4/>
+    </div>
+  );
+}
+
+const function2s: Set<any> = new Set();
+
+function Button(props) {
+  return (<button onClick={props.onClick} className="my-button">{props.children}</button>);
+}
+
+const App2 = () => {
+  const [delta, setDelta] = useState(1);
+  const [c, setC] = useState(0);
+
+  const incrementDelta = () => {setDelta(delta => delta + 1)};
+  const increment = () => setC(c => c + delta);
+
+  // Register the function2s so we can count them
+  function2s.add(incrementDelta);
+  function2s.add(increment);
+
+  return (<div>
+    <div> Delta is {delta} </div>
+    <div> Counter is {c} </div>
+    <br/>
+    <div>
+      <Button onClick={incrementDelta}>Increment Delta</Button>
+      <Button onClick={increment}>Increment Counter</Button>
+    </div>
+    <br/>
+    <div> Newly Created Functions: {function2s.size - 2} </div>
+  </div>)
+}
+
+const function3s: Set<any> = new Set();
+
+const App3 = () => {
+  const [delta, setDelta] = useState(1);
+  const [c, setC] = useState(0);
+
+  // No dependencies (i.e. []) for now
+  const incrementDelta = useCallback(() => setDelta(delta => delta + 1), []);
+  const increment = useCallback(() => setC(c => c + delta), []);
+
+  // Register the function3s so we can count them
+  function3s.add(incrementDelta);
+  function3s.add(increment);
+
+  return (
+    <div>
+      <div> Delta is {delta} </div>
+      <div> Counter is {c} </div>
+      <br/>
+      <div>
+        <Button onClick={incrementDelta}>Increment Delta</Button>
+        <Button onClick={increment}>Increment Counter</Button>
+      </div>
+      <br/>
+      <div> Newly Created Functions: {function3s.size - 2} </div>
+    </div>
+  )
+}
+
+/*
+This is because at the point of instantiation of the increment function, the value of delta was 1, and this was captured in the function’s scope. Since we’re caching the increment instance, it’s never recreated and it uses its original scope with detla = 1.
+The useCallback hook has created a single cached version of increment, which encapsulates the initial value of delta. When App re-renders with different values for delta, useCallback returns the previous version of the increment function which keeps the old value of delta from the first rendering.
+We need to tell useCallback to create new cached version of increment for every change of delta.
+*/
+
+const function4s: Set<any> = new Set();
+
+const App4 = () => {
+  const [delta, setDelta] = useState(1);
+  const [c, setC] = useState(0);
+
+  const incrementDelta = useCallback(() => setDelta(delta => delta + 1), []);
+
+  // Recreate increment on every change of delta!
+  const increment = useCallback(() => setC(c => c + delta), [delta]);
+
+  // Can depend on [c1, c2] instead, but it would be brittle
+  const incrementBoth = useCallback(() => {
+      incrementDelta();
+      increment();
+  }, [increment, incrementDelta]); 
+
+  // Register the function4s so we can count them
+  function4s.add(incrementDelta);
+  function4s.add(increment);
+
+  return (
+    <div>
+      <div> Delta is {delta} </div>
+      <div> Counter is {c} </div>
+      <br/>
+      <div>
+        <Button onClick={incrementDelta}>Increment Delta</Button>
+        <Button onClick={increment}>Increment Counter</Button>
+      </div>
+      <br/>
+      <div> Newly Created Functions: {function4s.size - 2} </div>
+    </div>
+  )
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>

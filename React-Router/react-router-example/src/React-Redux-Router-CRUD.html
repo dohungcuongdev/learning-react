@@ -1,0 +1,927 @@
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+
+    <!-- React router-->
+    <script src="https://unpkg.com/react-router-dom/umd/react-router-dom.min.js"></script>
+</head>
+
+
+<div id='application-host'></div>
+
+<script>
+    const {
+        Router,
+        Route,
+        IndexRoute,
+        Link,
+        hashHistory
+    } = ReactRouter;
+
+    // alert(typeof ReactRedux.Provider);
+    // alert(typeof ReactRedux.connect);
+
+    const AppRouter = () => (
+        <Router history={hashHistory}>
+            <Route path='/' component={App}>
+                <IndexRoute component={Dashboard} />
+                <Route path='exercises'>
+                    <IndexRoute component={ExerciseList}>
+                        <Route path='delete/:id' component={DeleteExercise} />
+                    </IndexRoute>
+                    <Route path='new' component={ExerciseForm} />
+                    <Route path=':id' component={ModifyExercise} />
+                </Route>
+            </Route>
+        </Router>
+    );
+
+    // middleware
+
+    class StoreMiddlewarePatch {
+
+        static patch(store, appKey) {
+            if (!appKey)
+                throw new Error('Must specify an app key on which data will be saved');
+            store.dispatch = StoreMiddlewarePatch.dispatch.bind(
+                store,
+                store.dispatch.bind(store),
+                appKey
+            );
+            return store;
+        }
+
+        static dispatch(dispatch, appKey, action) {
+            let result,
+                state;
+
+            console.log('dispatching:', action);
+            result = dispatch(action);
+            state = store.getState();
+            StoreMiddlewarePatch.saveState(state, appKey);
+            return result;
+        }
+
+        static saveState(state, appKey) {
+            StoreMiddlewarePatch.getPersist().setItem(
+                `appState_${appKey}`,
+                JSON.stringify(state)
+            );
+            console.log('state persisted:', state);
+        }
+
+        static getState(appKey) {
+            if (!appKey)
+                throw new Error('Must specify an app key from which data will be retrieved')
+            let appState = StoreMiddlewarePatch.getPersist().getItem(`appState_${appKey}`);
+
+            try {
+                return JSON.parse(appState || '{}');
+            } catch (er) {
+                return {};
+            }
+        }
+
+        static getPersist() {
+            if (!StoreMiddlewarePatch._persist) {
+                StoreMiddlewarePatch._persist = StoreMiddlewarePatch.createPersist();
+            }
+            return StoreMiddlewarePatch._persist;
+        }
+
+        static createPersist() {
+            if (localStorage && localStorage.setItem && localStorage.getItem) {
+                return localStorage;
+            } else {
+                return {
+                    items: {},
+                    setItem: function (key, value) {
+                        this.items[key] = value;
+                        return this.getItem(key);
+                    },
+                    getItem: function (key) {
+                        return this.items[key];
+                    }
+                };
+            }
+        }
+    }
+
+    // data
+
+    const actionTypes = {
+        SAVE_EXERCISE: 'SAVE_EXERCISE',
+        DELETE_EXERCISE: 'DELETE_EXERCISE',
+        SAVE_ROUTINE: 'SAVE_ROUTINE',
+        DELETE_ROUTINE: 'DELETE_ROUTINE',
+        START_TIMER: 'START_TIMER',
+    };
+
+
+    class actionCreators {
+        static saveExercise(exercise) {
+            return { type: actionTypes.SAVE_EXERCISE, exercise };
+        }
+        static deleteExercise(id) {
+            return { type: actionTypes.DELETE_EXERCISE, id };
+        }
+        static saveRoutine(routine) {
+            return { type: actionTypes.SAVE_ROUTINE, routine };
+        }
+        static deleteExercise(id) {
+            return { type: actionTypes.DELETE_EXERCISE, id };
+        }
+        static startTimer(time) {
+            return { type: actionTypes.START_TIMER, time };
+        }
+    };
+
+    class ActionRouter {
+        constructor(actions) {
+            this.actions = actions;
+        }
+        route(state, action) {
+            state = _.clone(state);
+            if (_.isFunction(this.actions[action.type])) {
+                state = this.actions[action.type](state, action);
+            }
+            if (_.isFunction(this.actions['ALL'])) {
+                state = this.actions['ALL'](state, action);
+            }
+            return state;
+        }
+    }
+
+    const UUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    const exerciseRoutes = new ActionRouter({
+        ALL: (state, action) => {
+            // this method is called for all action types.
+            // in this manner, the exerciseRoutes can respond to any action,
+            // in case it needs to do anything ancillary based on other actions.
+            //
+            // EXAMPLE:
+            // if (action.type === actionTypes.SET_TIMER) {
+            //      // DO SOMETHING ANCILLARILY RELATED TO EXERCISES
+            // }
+            return state;
+        },
+        SAVE_EXERCISE: (state, action) => {
+            if (action.exercise) {
+                // VALIDATE EXERCISE?
+                if (action.exercise.id) {
+                    // MODIFY: find existing exercise
+                    let index = _.indexOf(_.pluck(state, 'id'), action.exercise.id);
+                    if (index === -1) {
+                        // if for some reason we didn't find it,
+                        // it already has a unique id, so just save it
+                        state.push(action.exercise);
+                    } else {
+                        state.splice(index, 1, action.exercise);
+                    }
+                    return state;
+                } else {
+                    // CREATE: assign new id and add to list
+                    state.push(
+                        _.extend(action.exercise, { id: UUID() })
+                    );
+                    return state;
+                }
+            }
+            return state;
+        },
+        DELETE_EXERCISE: (state, action) => {
+            if (action.id) {
+                return _.reject(state, (exercise) => {
+                    return exercise.id === action.id;
+                });
+            }
+            return state;
+        }
+    });
+
+    const appReducer = Redux.combineReducers({
+        exercises: (state, action) => {
+            return exerciseRoutes.route(state || [], action);
+        },
+        routines: (state, action) => {
+            if (!state)
+                state = [];
+            // TODO: create routinesRoute
+            return _.clone(state);
+        }
+    })
+    const store = StoreMiddlewarePatch.patch(
+        Redux.createStore(
+            appReducer,
+            StoreMiddlewarePatch.getState('exerciseApp')
+        ),
+        'exerciseApp'
+    );
+
+    // app
+
+    class Base extends React.Component {
+        static contextTypes = {
+            store: React.PropTypes.object
+        };
+    }
+
+    class App extends Base {
+        render() {
+            return (
+                <div className='exercise-app'>
+                    <PrimaryNavigation />
+                    {this.props.children}
+                    <Debug />
+                </div>
+            );
+        }
+    }
+
+    class PrimaryNavigation extends Base {
+        componentWillMount() {
+            this.setState({
+                active: false
+            });
+        }
+        render() {
+            let listClassName = 'primary-navigation';
+
+            if (this.state.active) {
+                listClassName += ' primary-navigation--active'
+            }
+
+            return (
+                <nav
+                    className={listClassName}
+                    onClick={this.toggleNavigation.bind(this)}
+                >
+                    <div className='primary-navigation__backdrop'>&nbsp;</div>
+                    <div className='primary-navigation__bar'>
+                        <a
+                            href='#'
+                            className='primary-navigation__toggle'
+                            title='Toggle menu visibility'
+                        >{this.state.active ? '✕' : '☰'}</a>
+                        {/*&#9776; ✖*/}
+                        <ul className='primary-navigation__list'>
+                            <li><Link to='/'>Dash</Link></li>
+                            <li><Link to='exercises'>Exercise list</Link></li>
+                            <li><Link to='exercises/new'>Create exercise</Link></li>
+                        </ul>
+                        {/*<Link to={{ pathname: '/users/me', query: { foo: 'bar' } }}>/users/me?foo=bar</Link>*/}
+                        {/*<Link to={`/taco/${taco.name}`}>{taco.name}</Link>*/}
+                    </div>
+                </nav>
+            );
+        }
+        toggleNavigation(ev) {
+            ev.preventDefault();
+            this.setState({
+                active: !this.state.active
+            });
+        }
+    }
+
+    class Debug extends Base {
+        render() {
+            return (
+                <div>
+                    <br /><br /><br />
+                    <fieldset className='debug-console'>
+                        <legend>debug info</legend>
+                        <div>
+                            <label>Location hash: </label>
+                            {location.hash}
+                        </div>
+                    </fieldset>
+                </div>
+            );
+        }
+    }
+
+    class Dashboard extends Base {
+        render() {
+            return (
+                <div>
+                    <h3>Workouts!</h3>
+                    <p>
+                        This is the starting point of a simple workout/routine application.
+                        Workouts will be organized into routines, which can be executed with some control.
+                </p>
+                    <blockquote>
+                        <a href="https://well.blogs.nytimes.com/2013/05/09/the-scientific-7-minute-workout/" title="NY Times - The Scientific 7-Minute Workout" target="blank">
+                            NY Times - The Scientific 7-Minute Workout
+                    </a>
+                        <p>
+                            An
+                        <a href="http://journals.lww.com/acsm-healthfitness/Fulltext/2013/05000/HIGH_INTENSITY_CIRCUIT_TRAINING_USING_BODY_WEIGHT_.5.aspx" target="blank">
+                                article in the May-June issue of the American College of Sports Medicine’s Health &amp; Fitness Journal
+                        </a>
+                            does just that. In 12 exercises deploying only body weight, a chair and a wall, it fulfills the latest mandates for high-intensity effort, which essentially combines a long run and a visit to the weight room into about seven minutes of steady discomfort — all of it based on science.
+                    </p>
+                        <p className="">
+                            "There's very good evidence” that high-intensity interval training provides "many of the fitness benefits of prolonged endurance training but in much less time,” says Chris Jordan, the director of exercise physiology at the Human Performance Institute in Orlando, Fla., and co-author of the new article.
+                    </p>
+                        <p>
+                            Work by scientists at McMaster University in Hamilton, Ontario, and other institutions shows, for instance, that even a few minutes of training at an intensity approaching your maximum capacity produces molecular changes within muscles comparable to those of several hours of running or bike riding.
+                    </p>
+                    </blockquote>
+                </div>
+            );
+        }
+    }
+
+
+    class BaseListView extends Base {
+        headers = [];
+        emptyMessage = 'This grid has no entries';
+        getData() {
+            return [];
+        }
+
+        render() {
+            let data = this.getData(),
+                content;
+
+            if (data.length) {
+                content = (
+                    <GridView data={data} headers={this.headers}>
+                        {this.props.children}
+                    </GridView>
+                );
+            } else {
+                content = this.emptyMessage;
+            }
+            return (
+                <div className='base-list-view'>{content}</div>
+            );
+        }
+    }
+
+    class ExerciseList extends BaseListView {
+        headers = [
+            'Exercise',
+            'Duration',
+            'Cooldown',
+            ' '
+        ];
+        emptyMessage = 'You have no exercises yet';
+        getData() {
+            let state = this.context.store.getState();
+
+            return state.exercises.map(function (exercise) {
+                let link = (text) => {
+                    return <Link to={`/exercises/${exercise.id}`}>{text}</Link>;
+                };
+
+                return [
+                    link(exercise.name),
+                    link(exercise.duration),
+                    link(exercise.rest),
+                    <Link to={`/exercises/delete/${exercise.id}`}>delete</Link>
+                ];
+            });
+        }
+    }
+
+    class StatefulForm extends Base {
+        constructor(props, context) {
+            let formValues = props.form || {};
+
+            super(props, context);
+
+            this.state = {
+                formSubmitted: false,
+                form: formValues,
+                formErrors: this.formValidate(formValues)
+            };
+        }
+
+        formSync(ev) {
+            let { name, value } = ev.target;
+
+            if (!name) {
+                console.warn('StatefulForm.syncForm found element without name');
+                return;
+            }
+
+            // TODO:  write in special circumstances for special inputs like checkbox and radio
+
+            this.formSyncField(name, value);
+        }
+
+        formSyncField(name, value) {
+            let formState = _.clone(this.state.form);
+
+            formState[name] = value;
+
+            this.setState({
+                form: formState,
+                formErrors: this.formValidate(formState)
+            });
+        }
+
+        formHasErrors() {
+            return !!_.compact(
+                _.values(this.state.formErrors)
+            ).length;
+        }
+
+        formValidate(newState) {
+            let formErrors = {},
+                noteError = (field, error) => formErrors[field] = error;
+
+            if (_.isFunction(this.validate)) {
+                this.validate(newState, noteError);
+            }
+
+            return formErrors;
+        }
+
+        getFieldErrors(field) {
+            return this.state.formSubmitted && this.state.formErrors[field];
+        }
+
+        formSubmit(ev) {
+            ev.preventDefault();
+            this.setState({ formSubmitted: true });
+            if (!this.formHasErrors()) {
+                this.save();
+            }
+        }
+    }
+
+    class ExerciseForm extends StatefulForm {
+        render() {
+            return (
+                <form
+                    className='exercise-form'
+                    onSubmit={this.formSubmit.bind(this)}
+                    onChange={this.formSync.bind(this)}
+                >
+                    <TextInput
+                        required='true'
+                        id='exercise-name'
+                        name='name'
+                        label='Exercise Name'
+                        value={this.state.form.name}
+                        error={this.getFieldErrors('name')}
+                    />
+                    <TextInput
+                        required='true'
+                        id='exercise-duration'
+                        name='duration'
+                        label='Duration'
+                        value={this.state.form.duration}
+                        error={this.getFieldErrors('duration')}
+                        type='number'
+                    />
+                    <TextInput
+                        required='true'
+                        id='exercise-rest'
+                        name='rest'
+                        label='Rest'
+                        value={this.state.form.rest}
+                        error={this.getFieldErrors('rest')}
+                        type='number'
+                    />
+                    <Button type='submit'>Save Exercise</Button>
+                </form>
+            );
+        }
+        validate(formState, noteError) {
+            if (!formState.name) {
+                noteError('name', 'Must define a name');
+            }
+            if (!formState.duration) {
+                noteError('duration', 'Must define a duration');
+            }
+            if (!formState.rest) {
+                noteError('rest', 'Must define a rest');
+            }
+        }
+        save() {
+            this.context.store.dispatch(
+                actionCreators.saveExercise(this.state.form)
+            );
+            this.props.history.push('/exercises');
+        }
+    }
+
+    class ModifyExercise extends Base {
+        render() {
+            let state = this.context.store.getState(),
+                id = this.props.routeParams.id,
+                exercise = _(state.exercises).findWhere({ id: id });
+
+            return (
+                <div className='exercise-edit'>
+                    <small>Editing...</small>
+                    <ExerciseForm
+                        form={exercise}
+                        history={this.props.history}
+                    />
+                </div>
+            );
+        }
+    }
+
+    class DeleteExercise extends Base {
+        render() {
+            let state = this.context.store.getState(),
+                id = this.props.routeParams.id,
+                exercise = _(state.exercises).findWhere({ id: id });
+
+            return (
+                <div>
+                    Are you sure you want to delete this exercise?
+                <div className='exercise-name-display'>
+                        {exercise.name}
+                    </div>
+                    <Button onClick={this.confirmed.bind(this)}>Yes, delete</Button>
+                    <Button onClick={this.cancel.bind(this)}>Cancel</Button>
+                </div>
+            );
+        }
+        confirmed() {
+            this.context.store.dispatch(
+                actionCreators.deleteExercise(this.props.routeParams.id)
+            );
+            this.props.history.push('/exercises');
+        }
+        cancel() {
+            this.props.history.push('/exercises');
+        }
+    }
+
+    class ErrorNotification extends React.Component {
+        render() {
+            if (this.props.error) {
+                return (
+                    <div className='notification notification__error'>
+                        {this.renderErrorText()}
+                    </div>
+                );
+            } else {
+                return this.props.children || null;
+            }
+        }
+        renderErrorText() {
+            if (!_.isArray(this.props.error)) {
+                return this.props.error;
+            } else {
+                return (
+                    <ul>
+                        {this.props.error.map((error) => {
+                            return <li key={error}>{error}</li>;
+                        })}
+                    </ul>
+                );
+            }
+        }
+    }
+
+    class TextInput extends React.Component {
+        static propTypes = {
+            name: React.PropTypes.string.isRequired,
+            id: React.PropTypes.string.isRequired,
+            label: React.PropTypes.string.isRequired
+        };
+        render() {
+            return (
+                <div className='form-component'>
+                    <FormLabel htmlFor={this.props.id} required={this.props.required}>
+                        {this.props.label}
+                    </FormLabel>
+                    <input
+                        type={this.props.type || 'text'}
+                        id={this.props.id}
+                        name={this.props.name}
+                        placeholder={this.props.placeholder || this.props.label}
+                        value={this.props.value}
+                        onChange={this.props.onChange || _.noop}
+                    />
+                    <ErrorNotification error={this.props.error} />
+                </div>
+            );
+        }
+    }
+
+    // class CheckboxInput extends React.Component {
+    //     render() {
+    //         return (
+    //             <div className='form-component'>
+    //                 <FormLabel forId={this.props.id} required={this.props.required}>
+    //                     <input type='checkbox'
+    //                         id={this.props.id}
+    //                         checked={this.props.checked}
+    //                         value={this.props.value}
+    //                         onChange={this.props.onChange || _.noop}
+    //                         />
+    //                     {this.props.label}
+    //                 </FormLabel>
+    //             </div>
+    //         );
+    //     }
+    // }
+
+    class FormLabel extends React.Component {
+        render() {
+            return (
+                <label htmlFor={this.props.htmlFor}>
+                    {this.props.children}
+                    {(() => {
+                        if (this.props.required) {
+                            return <span className='required-indicator'>*</span>
+                        }
+                    })()}
+                </label>
+            );
+        }
+    }
+
+    class Button extends React.Component {
+        render() {
+            return (
+                <button
+                    type={this.props.type || 'button'}
+                    className='form-button'
+                    onClick={this.props.onClick || _.noop}
+                >
+                    {this.props.children}
+                </button>
+            );
+        }
+    }
+
+
+
+    class GridView extends React.Component {
+        static defaultProps = {
+            headers: [],
+            data: []
+        };
+
+        render() {
+            return (
+                <div className='GridView-container'>
+                    <table className="GridView" cellSpacing="0">
+                        {this.renderHeaders()}
+                        {this.renderBody()}
+                    </table>
+                    {this.props.children}
+                </div>
+            );
+        }
+
+        renderBody() {
+            return (
+                <tbody>
+                    {this.props.data.map((row, i) => {
+                        return (
+                            <GridViewRow rowData={row} rowIndex={i} />
+                        );
+                    })}
+                </tbody>
+            );
+        }
+
+        renderHeaders() {
+            if (this.props.headers.length) {
+                return (
+                    <thead>
+                        <GridViewRow rowData={this.props.headers} rowIndex='header' />
+                    </thead>
+                );
+            }
+        }
+    }
+
+    class GridViewRow extends React.Component {
+        static defaultProps = {
+            rowData: []
+        };
+        render() {
+            return (
+                <tr className={"row__" + this.props.rowIndex}>
+                    {this.props.rowData.map((cell, i) => {
+                        return <GridViewCell
+                            content={cell}
+                            className={`cell__${this.props.rowIndex}_${i}`}
+                        />
+                    })}
+                </tr>
+            );
+        }
+    }
+
+    class GridViewCell extends React.Component {
+        static defaultProps = {
+            content: '',
+            className: ''
+        };
+        render() {
+            return (
+                <td className={this.props.className}>
+                    {this.props.content}
+                </td>
+            );
+        }
+    }
+
+
+    // bootstrap
+    class Provider extends React.Component {
+        getChildContext() {
+            return { store: this.props.store };
+        }
+        render() {
+            return this.props.children;
+        }
+    }
+    Provider.childContextTypes = {
+        store: React.PropTypes.object
+    };
+
+    function mountApp() {
+        var appLayout = document.getElementById('application-host');
+
+        document.removeEventListener('DOMContentLoaded', mountApp, false);
+
+        React.render(
+            <Provider store={store}>
+                {AppRouter()}
+            </Provider>,
+            appLayout
+        );
+
+    };
+    document.addEventListener('DOMContentLoaded', mountApp, false);
+</script>
+
+<style>
+    @ease-in-out: cubic-bezier(0.675, 0.005, 0.350, 0.995);
+
+    @nav-size: 45px;
+    @nav-color: #4488bb;
+    @nav-max-width: 300px;
+
+    .exercise-app {
+        margin-top: @nav-size + 10px;
+    }
+
+    .GridView {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+
+        background-color: #eee;
+        width: 100%;
+
+        tr td {
+            padding: 3px 7px;
+        }
+
+        thead tr td {
+            background-color: #aaa;
+            color: white;
+        }
+
+        tbody tr:nth-child(even) td {
+            background-color: #ddd;
+        }
+    }
+
+    .notification.notification__error {
+        color: red;
+    }
+
+    .primary-navigation__bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: @nav-size;
+        background-color: @nav-color;
+    }
+
+    .primary-navigation__toggle {
+        height: @nav-size;
+        width: @nav-size;
+        display: inline-block;
+        text-decoration: none;
+        color: black;
+        text-align: center;
+        line-height: @nav-size * 1;
+    }
+
+    .primary-navigation__list {
+        position: fixed;
+        width: 100%;
+        max-width: @nav-max-width;
+        max-height: 100%;
+        overflow-y: auto;
+        overflow-x: visible;
+        left: -@nav-max-width;
+        margin: 0;
+        padding: @nav-size 0 0 0;
+        top: 0;
+        background-color: darken(@nav-color, 10%);
+        list-style-type: none;
+        z-index: -1;
+        #mixin .transition(left 0.3s @ease-in-out);
+
+        li {
+            margin: 0;
+            padding: 0;
+
+            a {
+                text-decoration: none;
+                padding: 10px 10px;
+                display: block;
+                color: #eee;
+
+                &:hover {
+                    color: white;
+                    background-color: darken(@nav-color, 14%);
+                }
+            }
+        }
+    }
+
+    .primary-navigation__backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 0;
+        width: 0;
+        line-height: 0;
+        font-size: 0;
+        background-color: black;
+        opacity: 0;
+        #mixin .transition(opacity 0.3s @ease-in-out);
+    }
+
+    .primary-navigation {
+        z-index: 10;
+    }
+
+    .primary-navigation.primary-navigation--active {
+        & .primary-navigation__list {
+            left: 0;
+        }
+
+        & .primary-navigation__backdrop {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+        }
+    }
+
+    .debug-console {
+        position: fixed;
+        background-color: hsla(0, 0, 0.7, 0.8);
+        box-sizing: border-box;
+        width: 100%;
+        bottom: 0;
+        left: 0;
+        border: none;
+
+        legend {
+            background-color: hsla(0, 0, 0.6, 1);
+            padding: 3px 7px;
+            border-radius: 5px;
+            font-size: small;
+            color: #f2f2f2;
+        }
+    }
+
+
+    #mixin {
+        .transition(@settings) {
+            -webkit-transition+: @settings;
+            -moz-transition+: @settings;
+            -o-transition+: @settings;
+            transition+: @settings;
+        }
+    }
+</style>

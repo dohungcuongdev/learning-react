@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+<script type="text/babel">
+// React code will go here
+
+const useState = React.useState;
+const useEffect = React.useEffect;
+const useCallback = React.useCallback;
+
+function App() {
+    return (
+        <div>
+            <ExampleWithManyStates message={'Hello World'}/>
+        </div>
+    );
+}
+  
+function ExampleWithManyStates(props) {
+  // Declare multiple state variables!
+  const [age, setAge] = useState(23);
+  const [fruit, setFruit] = useState('banana');
+  const [todos, setTodos] = useState([{ text: 'Learn Hooks' }]);
+  // ...
+
+  // Custom hook usage
+  const [toggle, setToggle] = useToggle(false);
+  const email = useInputValue("");  
+  const password = useInputValue("");
+  const handleToggle = (toggle) => {
+    setToggle(toggle);
+  }
+  const handleLogin = event => {
+    console.log(email.value);
+    console.log(password.value);
+  }
+
+  // The Effect Hook, useEffect, adds the ability to perform side effects from a function component. It serves the same purpose as componentDidMount, componentDidUpdate, and componentWillUnmount in React classes, but unified into a single API
+  // Similar to componentDidMount and componentDidUpdate:
+  useEffect(() => {
+    // Update the document title using the browser API
+    document.title = `You are ${age} years old`;
+    console.log(props.message);
+  });
+
+  return (
+    <div>
+        <p>You are {age} years old</p>
+        <p>{age}</p>
+        <p>{fruit}</p>
+        <p>{todos[0].text}</p>
+        <button onClick={() => setAge(age+1)}>
+            Add 1 to age
+        </button>
+        <p>{props.message}</p>
+        <button onClick={() => handleToggle(true)}>
+            On
+        </button>
+        <button onClick={() => handleToggle(false)}>
+            Off
+        </button>
+        <p>{toggle?"ON":"OFF"}</p>
+        <input type="text" placeholder="Email" {...email} />
+        <input type="password" placeholder="Password" {...password} />
+        <button onClick={handleLogin}>
+            Login
+        </button>
+    </div>
+  );
+}
+
+// Custom Hook
+const useInputValue = initialValue => {
+  const [value, setValue] = useState(initialValue);
+   return {
+     value,
+     onChange: e => { 
+      setValue(e.target.value || e.target.innerText);
+    }
+  };
+};
+
+// Custom Hook
+const useToggle = (initial) => {  
+  const [open, setOpen] = useState(initial);   
+  return [open, useCallback(() => setOpen(status => !status))];
+};
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+  <script type="text/babel">
+      // React code will go here
+
+      const items = [{id:1, term: 'item1', description: 'this is the first item'}, {id:2, term: 'item2', description: 'this is the second item'}]
+
+      class App extends React.Component {
+        render() {
+            return (
+              <React.Fragment>
+                <Table />
+                <Glossary items={items}/>
+              </React.Fragment>
+            );
+        }
+      }
+
+      class Table extends React.Component {
+        render() {
+            return (
+              <table border="1">
+                <tr>
+                  <Columns />
+                </tr>
+            </table>
+            );
+        }
+      }
+
+      class Columns extends React.Component {
+        render() {
+            return (
+              <React.Fragment> {/* A common pattern in React is for a component to return multiple elements. Fragments let you group a list of children without adding extra nodes to the DOM.*/} 
+                <td>Hello</td>
+                <td>World</td>
+              </React.Fragment>
+            );
+        }
+      }
+
+      // Short Syntax
+      /*class Columns extends React.Component {
+        render() {
+          return (
+            <>
+              <td>Hello</td>
+              <td>World</td>
+            </>
+          );
+        }
+      }*/
+
+      // Keyed Fragments
+      function Glossary(props) {
+        return (
+          <dl>
+            {props.items.map(item => (
+              // Without the `key`, React will fire a key warning
+              <React.Fragment key={item.id}>
+                <dt>{item.term}</dt>
+                <dd>{item.description}</dd>
+              </React.Fragment>
+            ))}
+          </dl>
+        );
+      }
+
+      ReactDOM.render(
+        <App/>
+        , document.getElementById('root'));
+    </script>
+</body>
+
+</html>

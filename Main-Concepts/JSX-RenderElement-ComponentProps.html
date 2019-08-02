@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+
+  <title>Hello React!</title>
+
+  <!-- React - the React top level API -->
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+  <!-- React DOM - adds DOM-specific methods -->
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+  <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <div id="root1"></div>
+  <div id="root2"></div>
+  <div id="root3"></div>
+  <div id="root4"></div>
+
+  <!-- The entry point for our app will be the root div element, which is named by convention. You'll also notice the text/babel script type, which is mandatory for using Babel.-->
+  <script type="text/babel">
+      // React code will go here
+
+      // Now, let's write our first code block of React. We're going to use ES6 classes to create a React component called App.
+      class App extends React.Component {
+        // the render() method, the only required method in a class component, which is used to render DOM nodes.
+        render() {
+            return (
+                // Inside the return, we're going to put what looks like a simple HTML element. Note that we're not returning a string here, so don't use quotes around the element. This is called JSX, and we'll learn more about it soon.
+                <h1>Hello world!</h1>
+            );
+        }
+      }
+      //render the App class we created into the root div in our HTML.
+      ReactDOM.render(<App />, document.getElementById('root'))
+
+      // JSX: JavaScript + XML
+      // As you've seen, we've been using what looks like HTML in our React code, but it's not quite HTML. This is JSX, which stands for JavaScript XML.
+      // With JSX, we can write what looks like HTML, and also we can create and use our own XML-like tags. Here's what JSX looks like assigned to a variable.
+      const element1 = <h1 className="site-heading">Hello, React</h1>
+      
+      // Using JSX is not mandatory for writing React. Under the hood, it's running createElement, which takes the tag, object containing the properties, and children of the component and renders the same information. The below code will have the same output as the JSX above.
+      // JSX is actually closer to JavaScript, not HTML, so there are a few key differences to note when writing it.
+      /* 
+        - className is used instead of class for adding CSS classes, as class is a reserved keyword in JavaScript.
+        - Properties and methods in JSX are camelCase - onclick will become onClick.
+        - Self-closing tags must end in a slash - e.g. <img />
+      */
+      const element2 = React.createElement('h1', { className: 'site-heading' }, 'Hello, React!')
+
+      // JavaScript expressions can also be embedded inside JSX using curly braces, including variables, functions, and properties. 
+      const name = 'Tania'
+      const element3 = <h1>Hello, {name}</h1>
+      // JSX is easier to write and understand than creating and appending many elements in vanilla JavaScript, and is one of the reasons people love React so much.
+
+      ReactDOM.render(element1, document.getElementById('root1'));
+      ReactDOM.render(element2, document.getElementById('root2'));
+      ReactDOM.render(element3, document.getElementById('root3'));
+
+
+      // Components and Props
+      function formatDate(date) {
+        return date.toLocaleDateString();
+      }
+
+      function Avatar(props) {
+        return (
+          <img
+            className="Avatar"
+            src={props.user.avatarUrl}
+            alt={props.user.name}
+          />
+        );
+      }
+
+      function UserInfo(props) {
+        return (
+          <div className="UserInfo">
+            <Avatar user={props.user} />
+            <div className="UserInfo-name">{props.user.name}</div>
+          </div>
+        );
+      }
+
+      function Comment(props) {
+        return (
+          <div className="Comment">
+            <UserInfo user={props.author} />
+            <div className="Comment-text">{props.text}</div>
+            <div className="Comment-date">
+              {formatDate(props.date)}
+            </div>
+          </div>
+        );
+      }
+
+      const comment = {
+        date: new Date(),
+        text: 'I hope you enjoy learning React!',
+        author: {
+          name: 'Hello Kitty',
+          avatarUrl: 'https://placekitten.com/g/64/64',
+        },
+      };
+
+      ReactDOM.render(
+        <Comment    
+          date={comment.date}
+          text={comment.text}
+          author={comment.author} />
+        , document.getElementById('root4'));
+    </script>
+</body>
+
+</html>

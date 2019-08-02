@@ -1,0 +1,159 @@
+<head>
+    <meta charset="utf-8" />
+
+    <title>Hello React!</title>
+
+    <!-- React - the React top level API -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+
+    <!-- React DOM - adds DOM-specific methods -->
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
+    <!-- Babel - a JavaScript compiler that lets us use ES6+ in old browsers -->
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+    <div id="app"></div>
+</body>
+
+<script type="text/babel">
+    const DealerContext = React.createContext();
+
+    class DealerProvider extends React.Component {
+        state = {
+            name: 'New Dealer',
+            dealerId: 1234,
+            groupId: 1,
+            editing: false
+        }
+        render() {
+            return (
+                <DealerContext.Provider value={{
+                    state: this.state,
+                    updateDealerName: (value) => {
+                        this.setState({ name: value.target.value });
+                    },
+                    toggleEditing: () => {
+                        if (this.state.editing) {
+                            this.setState({ editing: false })
+                        } else {
+                            this.setState({ editing: true })
+                        }
+                    }
+                }}>
+                    {this.props.children}
+                </DealerContext.Provider>
+            )
+        }
+    }
+
+    class DealerProfile extends React.Component {
+        render() {
+            return (
+                <div className="dealer-profile">
+                    <DealerContext.Consumer>
+                        {(context) => {
+
+                            let btnText = "edit";
+                            if (context.state.editing) {
+                                btnText = 'save';
+                            }
+                            return (
+                                <React.Fragment>
+                                    <p>
+                                        Name: {context.state.name}
+                                        <button onClick={context.toggleEditing}>{btnText}</button>
+                                    </p>
+                                    <p>Dealer ID: {context.state.dealerId}</p>
+                                </React.Fragment>
+                            )
+                        }}
+                    </DealerContext.Consumer>
+                </div>
+            )
+        }
+    }
+
+    class DealerActions extends React.Component {
+        render() {
+            return (
+                <DealerContext.Consumer>
+                    {(context) => (
+                        <React.Fragment>
+                            {context.state.editing
+                                ? <input
+                                    type="text"
+                                    defaultValue={context.state.name}
+                                    onChange={context.updateDealerName.bind(this)} />
+                                : null
+                            }
+                        </React.Fragment>
+                    )}
+                </DealerContext.Consumer>
+            )
+        }
+    }
+
+    const DealerCard = () => {
+        return (
+            <div className="dealer-page">
+                <DealerProfile />
+                <DealerActions />
+            </div>
+        )
+    }
+
+    class DealerApp extends React.Component {
+        render() {
+            return (
+                <DealerProvider>
+                    <h1>Dealer Card</h1>
+                    <DealerCard />
+                    <p><em>Using React Context API with React 16.4</em></p>
+                </DealerProvider>
+            );
+        }
+    }
+
+    ReactDOM.render(<DealerApp />, document.getElementById('app'));
+</script>
+
+
+<style rel="stylesheet/scss" type="text/css">
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        display: flex;
+        justify-content: center;
+    }
+
+    .dealer-page {
+        background: #eee;
+        padding: 3em 1em;
+        width: 300px;
+        border-radius: 3px;
+        box-shadow: 1px 2px 8px #888;
+
+        p {
+            display: flex;
+            align-items: center;
+        }
+
+        button {
+            margin-left: auto;
+            background: cornflowerblue;
+            border: none;
+            color: #fff;
+            padding: 0.5em;
+            border-radius: 5px;
+        }
+    }
+
+    em {
+        color: #888;
+        font-size: 0.75rem;
+    }
+</style>
